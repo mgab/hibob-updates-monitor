@@ -1,0 +1,19 @@
+[project]
+name = "hibob-monitor"
+version = "1.0.0"
+description = "HiBob Employee Monitor - Download active employees using browser cookie extraction"
+requires-python = ">=3.8"
+dependencies = [
+    "browser_cookie3>=0.19.1",
+]
+
+[project.scripts]
+hibob-monitor = "hibob_monitor.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.8.5,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "hibob_monitor"
+module-root = ""
