@@ -10,52 +10,52 @@ from typing import Dict, List, Any
 @dataclass
 class Employee:
     """Structured employee data with normalized fields."""
+
     id: str
     email: str
     full_name: str
     status: str
     raw_data: Dict[str, Any]
-    
+
     @classmethod
-    def from_raw_data(cls, raw_data: Dict[str, Any]) -> 'Employee':
+    def from_raw_data(cls, raw_data: Dict[str, Any]) -> "Employee":
         """Create Employee from raw API response data."""
         # Extract normalized fields
-        emp_id = str(raw_data.get('id', ''))
-        
+        emp_id = str(raw_data.get("id", ""))
+
         # Try different email field locations
         email = (
-            raw_data.get('email', '') or
-            raw_data.get('work', {}).get('email', '') if isinstance(raw_data.get('work'), dict) else '' or
-            raw_data.get('personalEmail', '') or
-            ''
+            raw_data.get("email", "") or raw_data.get("work", {}).get("email", "")
+            if isinstance(raw_data.get("work"), dict)
+            else "" or raw_data.get("personalEmail", "") or ""
         )
-        
+
         # Try different name field locations
         full_name = (
-            raw_data.get('fullName', '') or
-            raw_data.get('displayName', '') or
-            raw_data.get('name', '') or
-            f"{raw_data.get('firstName', '')} {raw_data.get('lastName', '')}".strip() or
-            'Unknown'
+            raw_data.get("fullName", "")
+            or raw_data.get("displayName", "")
+            or raw_data.get("name", "")
+            or f"{raw_data.get('firstName', '')} {raw_data.get('lastName', '')}".strip()
+            or "Unknown"
         )
-        
+
         # Extract status
-        status = str(raw_data.get('status', 'active')).lower()
-        
+        status = str(raw_data.get("status", "active")).lower()
+
         return cls(
             id=emp_id,
             email=email,
             full_name=full_name,
             status=status,
-            raw_data=raw_data
+            raw_data=raw_data,
         )
-    
+
     def __eq__(self, other) -> bool:
         """Compare employees based on raw data for change detection."""
         if not isinstance(other, Employee):
             return False
         return self.raw_data == other.raw_data
-    
+
     def __hash__(self) -> int:
         """Hash based on id and email for set operations."""
         return hash((self.id, self.email))
@@ -64,54 +64,52 @@ class Employee:
 @dataclass
 class EmployeeList:
     """Container for employee data with metadata."""
+
     timestamp: datetime
     count: int
     employees: List[Employee] = field(default_factory=list)
-    
+
     @classmethod
-    def from_raw_data(cls, employees_data: List[Dict[str, Any]]) -> 'EmployeeList':
+    def from_raw_data(cls, employees_data: List[Dict[str, Any]]) -> "EmployeeList":
         """Create EmployeeList from raw API response data."""
         employees = [Employee.from_raw_data(emp_data) for emp_data in employees_data]
-        return cls(
-            timestamp=datetime.now(),
-            count=len(employees),
-            employees=employees
-        )
-    
+        return cls(timestamp=datetime.now(), count=len(employees), employees=employees)
+
     def __eq__(self, other) -> bool:
         """Compare EmployeeLists based on employee data (ignoring timestamp)."""
         if not isinstance(other, EmployeeList):
             return False
         return self.employees == other.employees
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'timestamp': self.timestamp.isoformat(),
-            'count': self.count,
-            'employees': [emp.raw_data for emp in self.employees]
+            "timestamp": self.timestamp.isoformat(),
+            "count": self.count,
+            "employees": [emp.raw_data for emp in self.employees],
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'EmployeeList':
+    def from_dict(cls, data: Dict[str, Any]) -> "EmployeeList":
         """Create from dictionary (for cache loading)."""
-        timestamp = datetime.fromisoformat(data['timestamp'])
-        employees_data = data.get('employees', [])
+        timestamp = datetime.fromisoformat(data["timestamp"])
+        employees_data = data.get("employees", [])
         employees = [Employee.from_raw_data(emp_data) for emp_data in employees_data]
         return cls(
             timestamp=timestamp,
-            count=data.get('count', len(employees)),
-            employees=employees
+            count=data.get("count", len(employees)),
+            employees=employees,
         )
 
 
 @dataclass
 class FieldChange:
     """Represents a change in a specific field."""
+
     field_path: str
     old_value: Any
     new_value: Any
-    
+
     def __str__(self) -> str:
         return f"{self.field_path}: {self.old_value} → {self.new_value}"
 
@@ -119,11 +117,12 @@ class FieldChange:
 @dataclass
 class ModifiedEmployee:
     """Represents an employee with field changes."""
+
     id: str
     email: str
     full_name: str
     changes: List[FieldChange] = field(default_factory=list)
-    
+
     def __str__(self) -> str:
         changes_str = ", ".join(str(change) for change in self.changes)
         return f"{self.full_name} (ID: {self.id}, Email: {self.email}) - Changes: {changes_str}"
@@ -132,17 +131,18 @@ class ModifiedEmployee:
 @dataclass
 class ChangeReport:
     """Report of changes between two EmployeeLists."""
+
     current_timestamp: datetime
     previous_timestamp: datetime
     added: List[Employee] = field(default_factory=list)
     removed: List[Employee] = field(default_factory=list)
     modified: List[ModifiedEmployee] = field(default_factory=list)
-    
+
     @property
     def total_changes(self) -> int:
         """Total number of changes."""
         return len(self.added) + len(self.removed) + len(self.modified)
-    
+
     @property
     def has_changes(self) -> bool:
         """Whether there are any changes."""

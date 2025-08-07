@@ -52,28 +52,42 @@ Change Tracking (enabled by default):
   • Use --disable-change-tracking to turn off
 
 Supported browsers: firefox (default), chrome, safari, edge
-        """
+        """,
     )
-    
-    parser.add_argument('--domain',
-                       help='HiBob domain (e.g., mycompany.hibob.com)')
-    parser.add_argument('--browser', 
-                       choices=[browser.value for browser in SupportedBrowsers], 
-                       default='firefox',
-                       help='Browser to extract cookies from (default: firefox)')
-    parser.add_argument('--format', choices=[fmt.value for fmt in OutputFormats], default='table',
-                       help='Output format (default: table)')
-    parser.add_argument('--output', '-o',
-                       help='Output file path')
-    parser.add_argument('--setup-help', action='store_true',
-                       help='Show setup instructions')
-    
+
+    parser.add_argument("--domain", help="HiBob domain (e.g., mycompany.hibob.com)")
+    parser.add_argument(
+        "--browser",
+        choices=[browser.value for browser in SupportedBrowsers],
+        default="firefox",
+        help="Browser to extract cookies from (default: firefox)",
+    )
+    parser.add_argument(
+        "--format",
+        choices=[fmt.value for fmt in OutputFormats],
+        default="table",
+        help="Output format (default: table)",
+    )
+    parser.add_argument("--output", "-o", help="Output file path")
+    parser.add_argument(
+        "--setup-help", action="store_true", help="Show setup instructions"
+    )
+
     # Change tracking options
-    parser.add_argument('--disable-change-tracking', action='store_true',
-                       help='Disable change tracking (enabled by default)')
-    parser.add_argument('--cache-file', default='data/employees_cache.json',
-                       help='Cache file path (default: data/employees_cache.json)')
-    parser.add_argument('--log-file', default='data/employee_changes.log',
-                       help='Changes log file path (default: data/employee_changes.log)')
-    
+    parser.add_argument(
+        "--disable-change-tracking",
+        action="store_true",
+        help="Disable change tracking (enabled by default)",
+    )
+    parser.add_argument(
+        "--cache-file",
+        default="data/employees_cache.json",
+        help="Cache file path (default: data/employees_cache.json)",
+    )
+    parser.add_argument(
+        "--log-file",
+        default="data/employee_changes.log",
+        help="Changes log file path (default: data/employee_changes.log)",
+    )
+
     return parser

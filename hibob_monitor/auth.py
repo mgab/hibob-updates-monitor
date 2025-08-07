@@ -19,13 +19,16 @@ def _test_endpoint(base_url: str, endpoint: str, cookies: Dict[str, str]) -> boo
 
 def test_authentication(base_url: str, cookies: Dict[str, str]) -> bool:
     """Test if current session is authenticated."""
-    test_functions = [partial(_test_endpoint, base_url, endpoint, cookies) for endpoint in TEST_ENDPOINTS]
-    
+    test_functions = [
+        partial(_test_endpoint, base_url, endpoint, cookies)
+        for endpoint in TEST_ENDPOINTS
+    ]
+
     for i, test_func in enumerate(test_functions):
         if test_func():
             print(f"✅ Authentication successful! (endpoint: {TEST_ENDPOINTS[i]})")
             return True
-    
+
     print("❌ Authentication test failed on all endpoints")
     return False
 
@@ -34,26 +37,28 @@ def authenticate_with_browser(domain: str, browser: str) -> Tuple[bool, Dict[str
     """Complete authentication flow using browser cookies."""
     normalized_domain = normalize_domain(domain)
     base_url = build_base_url(domain)
-    
+
     print(f"🔍 Extracting cookies from {browser.title()} for {normalized_domain}...")
-    
+
     # Extract and filter cookies
     all_cookies = extract_cookies_from_browser(browser, normalized_domain)
-    
+
     if not all_cookies:
         print(f"❌ No cookies found in {browser.title()}.")
         print(f"Make sure you're logged into HiBob at https://{normalized_domain}")
         return False, {}
-    
+
     auth_cookies = filter_auth_cookies(all_cookies)
-    
+
     if not auth_cookies:
         print("❌ No authentication cookies found.")
         print(f"Available cookies: {list(all_cookies.keys())}")
         return False, {}
-    
-    print(f"✅ Found {len(auth_cookies)} authentication cookies: {list(auth_cookies.keys())}")
-    
+
+    print(
+        f"✅ Found {len(auth_cookies)} authentication cookies: {list(auth_cookies.keys())}"
+    )
+
     # Test authentication
     if test_authentication(base_url, auth_cookies):
         return True, auth_cookies
