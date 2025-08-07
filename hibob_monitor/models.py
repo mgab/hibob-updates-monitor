@@ -108,12 +108,12 @@ class EmployeeList:
 @dataclass
 class FieldChange:
     """Represents a change in a specific field."""
-    field_name: str
+    field_path: str
     old_value: Any
     new_value: Any
     
     def __str__(self) -> str:
-        return f"{self.field_name}: {self.old_value} → {self.new_value}"
+        return f"{self.field_path}: {self.old_value} → {self.new_value}"
 
 
 @dataclass

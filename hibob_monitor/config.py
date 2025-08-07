@@ -26,11 +26,11 @@ TEST_ENDPOINTS: List[str] = [
 
 # API endpoints to try for employee data
 API_ENDPOINTS: List[str] = [
-    "/api/v1/people",
-    "/api/people",
-    "/api/v1/employees", 
     "/api/employees",
-    "/api/v2/people"
+    "/api/v1/employees",
+    "/api/people",
+    "/api/v1/people",
+    "/api/v2/people",
 ]
 
 # Possible keys for employee data in API responses
@@ -59,10 +59,13 @@ DEFAULT_CACHE_CONFIG = CacheConfig(
     deduplicate_consecutive=True
 )
 
-IGNORED_EMPLOYEE_FIELDS: set[str] = {
-    "yearsOfService",
-    "tenureDuration",
-    "durationOfEmployment",
-    "tenureDurationYears",
-    "tenureYears"
+IGNORED_EMPLOYEE_PATHS: set[str] = {
+    "work.yearsOfService",
+    "work.durationOfEmployment",
+    "work.tenureDurationYears",
+    "work.tenureDuration",
+    "work.tenureYears",
+    "payroll.timeSinceLastSalaryChange",
+    "avatarUrl",
+    "about.avatar",
 }
