@@ -56,6 +56,7 @@ TABLE_DISPLAY_FIELDS: List[str] = [
     "fullName",
     "work.site",
     "work.tenureDurationYears",
+    "work.department",
     "work.reportsTo.displayName",
 ]
 

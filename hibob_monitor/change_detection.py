@@ -19,7 +19,7 @@ def _build_employee_index(employees: List[Employee]) -> Dict[Tuple[str, str], Em
 
 
 def _deep_diff(
-    obj1: Any, obj2: Any, path: str = "", ignored_paths: Set[str] = set()
+    old_obj: Any, new_obj: Any, path: str = "", ignored_paths: Set[str] = set()
 ) -> List[FieldChange]:
     """Compare two objects recursively and return detailed changes."""
 
@@ -32,18 +32,18 @@ def _deep_diff(
     if path in ignored_paths:
         return changes
 
-    elif obj1 == obj2:
+    elif old_obj == new_obj:
         return changes
 
-    elif isinstance(obj1, dict) and isinstance(obj2, dict):
-        all_keys = set(obj1.keys()) | set(obj2.keys())
+    elif isinstance(old_obj, dict) and isinstance(new_obj, dict):
+        all_keys = set(old_obj.keys()) | set(new_obj.keys())
         for key in all_keys:
             changes += _deep_diff(
-                obj1.get(key), obj2.get(key), extend_path(path, key), ignored_paths
+                old_obj.get(key), new_obj.get(key), extend_path(path, key), ignored_paths
             )
 
-    elif isinstance(obj1, list) and isinstance(obj2, list):
-        for i, (item1, item2) in enumerate(zip_longest(obj1, obj2)):
+    elif isinstance(old_obj, list) and isinstance(new_obj, list):
+        for i, (item1, item2) in enumerate(zip_longest(old_obj, new_obj)):
             changes += _deep_diff(
                 item1, item2, extend_path(path, f"[{i}]"), ignored_paths
             )
@@ -52,8 +52,8 @@ def _deep_diff(
         changes.append(
             FieldChange(
                 field_path=path,
-                old_value=obj1,
-                new_value=obj2,
+                old_value=old_obj,
+                new_value=new_obj,
             )
         )
 
@@ -63,7 +63,7 @@ def _deep_diff(
 def _compare_employee_data(current: Employee, previous: Employee) -> List[FieldChange]:
     """Compare two employee objects and return list of field changes."""
     return _deep_diff(
-        current.raw_data, previous.raw_data, ignored_paths=IGNORED_EMPLOYEE_PATHS
+        old_obj=previous.raw_data, new_obj=current.raw_data, ignored_paths=IGNORED_EMPLOYEE_PATHS
     )
 
 
@@ -102,6 +102,8 @@ def compare_employee_lists(
                     id=current_emp.id,
                     email=current_emp.email,
                     full_name=current_emp.full_name,
+                    status=current_emp.status,
+                    department=current_emp.department,
                     changes=field_changes,
                 )
             )

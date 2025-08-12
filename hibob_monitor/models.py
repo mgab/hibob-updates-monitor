@@ -6,15 +6,17 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Any
 
-
 @dataclass
-class Employee:
-    """Structured employee data with normalized fields."""
-
+class EmployeeDescription:
     id: str
     email: str
     full_name: str
     status: str
+    department: str
+
+@dataclass
+class Employee(EmployeeDescription):
+    """Structured employee data with normalized fields."""
     raw_data: Dict[str, Any]
 
     @classmethod
@@ -42,11 +44,14 @@ class Employee:
         # Extract status
         status = str(raw_data.get("status", "active")).lower()
 
+        department = str(raw_data.get("work", {}).get("department", "")).strip()
+
         return cls(
             id=emp_id,
             email=email,
             full_name=full_name,
             status=status,
+            department=department,
             raw_data=raw_data,
         )
 
@@ -115,12 +120,8 @@ class FieldChange:
 
 
 @dataclass
-class ModifiedEmployee:
+class ModifiedEmployee(EmployeeDescription):
     """Represents an employee with field changes."""
-
-    id: str
-    email: str
-    full_name: str
     changes: List[FieldChange] = field(default_factory=list)
 
 
