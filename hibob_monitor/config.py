@@ -76,4 +76,8 @@ IGNORED_EMPLOYEE_PATHS: set[str] = {
     "about.avatar",
     "work.directReports",
     "work.indirectReports",
+    "employee.orgLevel",
+    "work.reportsTo.surname",
+    "work.reportsTo.firstName",
+    "work.reportsTo.id",
 }

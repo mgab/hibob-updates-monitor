@@ -2,6 +2,7 @@
 Authentication functionality
 """
 
+import logging
 from functools import partial
 from typing import Dict, Tuple
 from .config import TEST_ENDPOINTS
@@ -12,6 +13,8 @@ from .cookies import (
     filter_auth_cookies,
     SupportedBrowser,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _test_endpoint(base_url: str, endpoint: str, cookies: Dict[str, str]) -> bool:
@@ -30,10 +33,12 @@ def test_authentication(base_url: str, cookies: Dict[str, str]) -> bool:
 
     for i, test_func in enumerate(test_functions):
         if test_func():
-            print(f"✅ Authentication successful! (endpoint: {TEST_ENDPOINTS[i]})")
+            logger.info(
+                f"✅ Authentication successful! (endpoint: {TEST_ENDPOINTS[i]})"
+            )
             return True
 
-    print("❌ Authentication test failed on all endpoints")
+    logger.error("❌ Authentication test failed on all endpoints")
     return False
 
 
@@ -44,7 +49,7 @@ def authenticate_with_browser(
     normalized_domain = normalize_domain(domain)
     base_url = build_base_url(domain)
 
-    print(
+    logger.info(
         f"🔍 Extracting cookies from {browser.value.title()} for {normalized_domain}..."
     )
 
@@ -52,18 +57,20 @@ def authenticate_with_browser(
     all_cookies = extract_cookies_from_browser(browser, normalized_domain)
 
     if not all_cookies:
-        print(f"❌ No cookies found in {browser.value.title()}.")
-        print(f"Make sure you're logged into HiBob at https://{normalized_domain}")
+        logger.error(f"❌ No cookies found in {browser.value.title()}.")
+        logger.info(
+            f"Make sure you're logged into HiBob at https://{normalized_domain}"
+        )
         return False, {}
 
     auth_cookies = filter_auth_cookies(all_cookies)
 
     if not auth_cookies:
-        print("❌ No authentication cookies found.")
-        print(f"Available cookies: {list(all_cookies.keys())}")
+        logger.error("❌ No authentication cookies found.")
+        logger.info(f"Available cookies: {list(all_cookies.keys())}")
         return False, {}
 
-    print(
+    logger.info(
         f"✅ Found {len(auth_cookies)} authentication cookies: {list(auth_cookies.keys())}"
     )
 

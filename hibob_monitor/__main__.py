@@ -4,6 +4,7 @@ HiBob Employee Monitor - Modular Functional Programming Version
 Main entry point using modular structure with change tracking
 """
 
+import logging
 from pathlib import Path
 import sys
 from typing import Optional, assert_never
@@ -21,6 +22,14 @@ from .config import DEFAULT_CACHE_CONFIG
 from .models import EmployeeList, ChangeReport
 
 
+logger = logging.getLogger(__name__)
+
+
+def setup_logging() -> None:
+    """Setup logging to stderr."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
+
+
 def run_hibob_monitor(
     domain: str,
     browser: SupportedBrowser,
@@ -33,44 +42,46 @@ def run_hibob_monitor(
 ) -> None:
     """Main application logic with change tracking."""
 
-    print("🔍 HiBob Employee Monitor")
-    print(f"📍 Domain: {domain}")
-    print(f"🌐 Browser: {browser.value.title()}")
+    logger.info("🔍 HiBob Employee Monitor")
+    logger.info(f"📍 Domain: {domain}")
+    logger.info(f"🌐 Browser: {browser.value.title()}")
     if enable_change_tracking:
-        print(f"📝 Change tracking: enabled (cache: {cache_file}, log: {log_file})")
+        logger.info(
+            f"📝 Change tracking: enabled (cache: {cache_file}, log: {log_file})"
+        )
     else:
-        print("📝 Change tracking: disabled")
-    print()
+        logger.info("📝 Change tracking: disabled")
+    logger.info("")
 
     employee_list = fetch_new_employee_list(domain, browser)
 
     if not employee_list:
-        print("❌ No active employees found.")
+        logger.error("❌ No active employees found.")
         sys.exit(1)
 
-    print(f"\n📊 Found {employee_list.count} active employees")
+    logger.info(f"\n📊 Found {employee_list.count} active employees")
 
     formatted_list = list_format.format(employee_list)
     if employee_list_path:
-        print(employee_list_path)
+        logger.info(employee_list_path)
         success = write_to_file(formatted_list, employee_list_path)
         if success:
-            print(
+            logger.info(
                 f"📄 Employee list saved as {list_format.value} to {employee_list_path}"
             )
 
     # Handle change tracking
     change_report_text = None
     if enable_change_tracking:
-        print("\n🔄 Checking for changes...")
+        logger.info("\n🔄 Checking for changes...")
         change_report = get_changes_since_latest_cache(employee_list, cache_file)
 
         if change_report is None:
-            print("📥 First run - creating initial cache")
+            logger.info("📥 First run - creating initial cache")
         elif not change_report.has_changes:
-            print("✅ No changes detected since last run")
+            logger.info("✅ No changes detected since last run")
         else:
-            print(
+            logger.info(
                 f"📈 Changes detected: {len(change_report.added)} added, {len(change_report.removed)} removed, {len(change_report.modified)} modified"
             )
             change_report_text = format_change_report_as_text(change_report)
@@ -78,9 +89,11 @@ def run_hibob_monitor(
             success = append_to_file(change_report_text, log_file)
 
             if success:
-                print(f"📝 {change_report.total_changes} changes logged to {log_file}")
+                logger.info(
+                    f"📝 {change_report.total_changes} changes logged to {log_file}"
+                )
             else:
-                print(f"⚠️  Warning: Could not write to log file {log_file}")
+                logger.warning(f"⚠️  Warning: Could not write to log file {log_file}")
 
         # Save current data to cache
         save_cache(employee_list, cache_file, DEFAULT_CACHE_CONFIG)
@@ -104,14 +117,14 @@ def fetch_new_employee_list(
     success, cookies = authenticate_with_browser(domain, browser)
 
     if not success:
-        print("\n❌ Authentication failed.")
-        print("💡 Make sure you're logged into HiBob in your browser.")
-        print("💡 Try a different browser with --browser option.")
-        print("💡 Use --setup-help for detailed instructions.")
+        logger.error("\n❌ Authentication failed.")
+        logger.info("💡 Make sure you're logged into HiBob in your browser.")
+        logger.info("💡 Try a different browser with --browser option.")
+        logger.info("💡 Use --setup-help for detailed instructions.")
         sys.exit(1)
 
     # Fetch employees
-    print("\n🔍 Fetching active employees...")
+    logger.info("\n🔍 Fetching active employees...")
     base_url = build_base_url(domain)
     return get_active_employees(base_url, cookies)
 
@@ -130,18 +143,18 @@ def get_change_report_since_latest_run(
     employee_list: EmployeeList, cache_file: Path
 ) -> ChangeReport | None:
     """Get the change report since the latest run."""
-    print("\n🔄 Checking for changes...")
+    logger.info("\n🔄 Checking for changes...")
     previous_employee_list = get_latest_cache(cache_file)
 
     if previous_employee_list is not None:
         change_report = compare_employee_lists(employee_list, previous_employee_list)
 
         if change_report.has_changes:
-            print(
+            logger.info(
                 f"📈 Changes detected: {len(change_report.added)} added, {len(change_report.removed)} removed, {len(change_report.modified)} modified"
             )
         else:
-            print("✅ No changes detected since last run")
+            logger.info("✅ No changes detected since last run")
         return change_report
     else:
         return None
@@ -149,6 +162,8 @@ def get_change_report_since_latest_run(
 
 def main() -> None:
     """Main function."""
+    setup_logging()
+
     parser = create_argument_parser()
     args = parser.parse_args()
 

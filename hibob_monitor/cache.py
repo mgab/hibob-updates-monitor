@@ -3,10 +3,13 @@ Cache management for employee data with smart deduplication
 """
 
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 from .models import EmployeeList
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -58,7 +61,7 @@ def load_cache(cache_file: Path) -> List[EmployeeList]:
             entries_data = data.get("entries", [])
             return [EmployeeList.from_dict(entry_data) for entry_data in entries_data]
     except (json.JSONDecodeError, IOError) as e:
-        print(f"⚠️  Warning: Could not load cache from {cache_file}: {e}")
+        logger.warning(f"⚠️  Warning: Could not load cache from {cache_file}: {e}")
         return []
 
 
@@ -103,4 +106,4 @@ def save_cache(
             json.dump(cache_data, f, indent=2, ensure_ascii=False)
 
     except IOError as e:
-        print(f"⚠️  Warning: Could not save cache to {cache_file}: {e}")
+        logger.warning(f"⚠️  Warning: Could not save cache to {cache_file}: {e}")

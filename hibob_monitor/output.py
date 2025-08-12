@@ -5,12 +5,16 @@ Output formatting for structured employee data and change reports
 import json
 import csv
 import io
+import logging
 import os
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Any, assert_never
 from .config import TABLE_DISPLAY_FIELDS
 from .models import EmployeeList, ChangeReport, Employee, ModifiedEmployee
+
+
+logger = logging.getLogger(__name__)
 
 
 class OutputFormat(Enum):
@@ -189,7 +193,7 @@ def write_to_file(content: str, filepath: Path) -> bool:
             f.write(content)
         return True
     except IOError as e:
-        print(f"Error writing to {filepath}: {e}")
+        logger.error(f"Error writing to {filepath}: {e}")
         return False
 
 
@@ -201,5 +205,5 @@ def append_to_file(content: str, filepath: Path) -> bool:
             f.write(content)
         return True
     except IOError as e:
-        print(f"Error appending to {filepath}: {e}")
+        logger.error(f"Error appending to {filepath}: {e}")
         return False

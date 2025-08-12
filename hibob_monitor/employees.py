@@ -2,6 +2,7 @@
 Employee data extraction and filtering
 """
 
+import logging
 from functools import partial
 from typing import Dict, List, Any, Optional
 from .config import (
@@ -12,6 +13,9 @@ from .config import (
 )
 from .http_utils import make_request
 from .models import EmployeeList
+
+
+logger = logging.getLogger(__name__)
 
 
 def _is_employee_object(data: Any) -> bool:
@@ -74,7 +78,7 @@ def _filter_active_employees(employees: List[Dict[str, Any]]) -> List[Dict[str, 
     # Log inactive employees for debugging
     inactive_employees = [emp for emp in employees if not _is_employee_active(emp)]
     for emp in inactive_employees:
-        print(
+        logger.warning(
             f"⚠️  Employee {emp.get('id', 'unknown')} is not active (status: {str(emp.get('status'))})"
         )
 
@@ -86,7 +90,7 @@ def _try_endpoint(
 ) -> Optional[EmployeeList]:
     """Try to fetch employees from a specific endpoint."""
     url = f"{base_url}{endpoint}"
-    print(f"🔍 Trying endpoint: {endpoint}")
+    logger.info(f"🔍 Trying endpoint: {endpoint}")
 
     data = make_request(url, cookies)
 
@@ -98,10 +102,10 @@ def _try_endpoint(
 
             if active_employees_data:
                 employee_list = EmployeeList.from_raw_data(active_employees_data)
-                print(f"✅ Found {employee_list.count} active employees")
+                logger.info(f"✅ Found {employee_list.count} active employees")
                 return employee_list
             else:
-                print(
+                logger.warning(
                     f"⚠️  Found {len(employees_data)} employees but none marked as active"
                 )
 
@@ -122,5 +126,5 @@ def get_active_employees(
         if result is not None:
             return result
 
-    print("❌ Could not find employee data at any known endpoint")
+    logger.error("❌ Could not find employee data at any known endpoint")
     return None

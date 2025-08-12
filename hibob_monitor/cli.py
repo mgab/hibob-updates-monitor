@@ -5,6 +5,7 @@ Command-line interface and help functions
 import argparse
 from enum import StrEnum
 from pathlib import Path
+import sys
 from .cookies import SupportedBrowser
 from .output import OutputFormat
 
@@ -19,7 +20,7 @@ class OutputInfo(StrEnum):
 
 def show_setup_help() -> None:
     """Show setup instructions."""
-    print("""
+    sys.stdout.write("""
 🚀 HiBob Employee Monitor Setup Guide (Modular Functional Version)
 
 1. Install browser_cookie3:

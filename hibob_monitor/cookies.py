@@ -2,10 +2,14 @@
 Browser cookie extraction functionality
 """
 
+import logging
+import sys
 from enum import Enum
 from typing import Dict, Callable, assert_never
 from .config import AUTH_KEYWORDS
 
+
+logger = logging.getLogger(__name__)
 
 # Try to import browser_cookie3
 try:
@@ -14,11 +18,9 @@ try:
     BROWSER_COOKIE3_AVAILABLE = True
 except ImportError:
     BROWSER_COOKIE3_AVAILABLE = False
-    print(
+    logger.error(
         "❌ browser_cookie3 not installed. Install it with: pip install browser_cookie3"
     )
-    import sys
-
     sys.exit(1)
 
 
@@ -63,14 +65,16 @@ def extract_cookies_from_browser(
     try:
         jar = browser.get_cookie_jar(domain_name=domain)
         cookies = _extract_domain_cookies(jar, domain)
-        print(f"📊 Extracted {len(cookies)} total cookies from {browser.value.title()}")
+        logger.info(
+            f"📊 Extracted {len(cookies)} total cookies from {browser.value.title()}"
+        )
         return cookies
     except Exception as e:
-        print(f"❌ Failed to extract cookies from {browser.value.title()}: {e}")
+        logger.error(f"❌ Failed to extract cookies from {browser.value.title()}: {e}")
         if browser == SupportedBrowser.FIREFOX:
-            print("💡 Make sure Firefox is closed or try using --browser chrome")
+            logger.info("💡 Make sure Firefox is closed or try using --browser chrome")
         elif browser == SupportedBrowser.CHROME:
-            print("💡 You may need to grant keychain access on macOS")
+            logger.info("💡 You may need to grant keychain access on macOS")
         return {}
 
 
