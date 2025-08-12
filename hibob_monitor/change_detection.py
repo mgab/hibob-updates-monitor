@@ -2,7 +2,6 @@
 Change detection and logging for employee data using structured models
 """
 
-import os
 from typing import Dict, List, Any, Tuple, Set
 from itertools import zip_longest
 from .models import EmployeeList, Employee, ChangeReport, FieldChange, ModifiedEmployee
@@ -114,59 +113,3 @@ def compare_employee_lists(
         removed=removed_employees,
         modified=modified_employees,
     )
-
-
-def _format_employee_summary(employee: Employee) -> str:
-    """Format employee for logging."""
-    return f"{employee.full_name} (ID: {employee.id}, Email: {employee.email})"
-
-
-def log_changes(change_report: ChangeReport, log_file: str) -> None:
-    """Log changes to a plain text file."""
-    if not change_report.has_changes:
-        return  # No changes to log
-
-    try:
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(log_file), exist_ok=True)
-
-        timestamp = change_report.current_timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        previous_timestamp = change_report.previous_timestamp.strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-
-        with open(log_file, "a", encoding="utf-8") as f:
-            f.write(f"\n{'=' * 60}\n")
-            f.write(f"Changes detected at {timestamp}\n")
-            f.write(f"Compared with data from {previous_timestamp}\n")
-            f.write(f"{'=' * 60}\n")
-
-            if change_report.added:
-                f.write(f"\n📈 ADDED EMPLOYEES ({len(change_report.added)}):\n")
-                for emp in change_report.added:
-                    f.write(f"  + {_format_employee_summary(emp)}\n")
-
-            if change_report.removed:
-                f.write(f"\n📉 REMOVED EMPLOYEES ({len(change_report.removed)}):\n")
-                for emp in change_report.removed:
-                    f.write(f"  - {_format_employee_summary(emp)}\n")
-
-            if change_report.modified:
-                f.write(f"\n📝 MODIFIED EMPLOYEES ({len(change_report.modified)}):\n")
-                for modified_emp in change_report.modified:
-                    f.write(
-                        f"  ~ {modified_emp.full_name} (ID: {modified_emp.id}, Email: {modified_emp.email})\n"
-                    )
-
-                    # Show field changes
-                    for change in modified_emp.changes:
-                        f.write(f"    {change}\n")
-
-            f.write(
-                f"\nSummary: {len(change_report.added)} added, {len(change_report.removed)} removed, {len(change_report.modified)} modified\n"
-            )
-
-        print(f"📝 {change_report.total_changes} changes logged to {log_file}")
-
-    except IOError as e:
-        print(f"⚠️  Warning: Could not write to log file {log_file}: {e}")

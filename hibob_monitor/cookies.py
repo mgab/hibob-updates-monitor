@@ -3,17 +3,8 @@ Browser cookie extraction functionality
 """
 
 from enum import Enum
-from typing import Dict
+from typing import Dict, Callable, assert_never
 from .config import AUTH_KEYWORDS
-
-
-class SupportedBrowsers(Enum):
-    """Enumeration of supported browsers."""
-
-    FIREFOX = "firefox"
-    CHROME = "chrome"
-    SAFARI = "safari"
-    EDGE = "edge"
 
 
 # Try to import browser_cookie3
@@ -31,20 +22,27 @@ except ImportError:
     sys.exit(1)
 
 
-def _get_browser_cookie_jar(browser: str, domain: str):
-    """Get cookie jar from specified browser."""
-    browser_functions = {
-        SupportedBrowsers.FIREFOX.value: browser_cookie3.firefox,
-        SupportedBrowsers.CHROME.value: browser_cookie3.chrome,
-        SupportedBrowsers.SAFARI.value: browser_cookie3.safari,
-        SupportedBrowsers.EDGE.value: browser_cookie3.edge,
-    }
+class SupportedBrowser(Enum):
+    """Enumeration of supported browsers."""
 
-    if browser not in browser_functions:
-        supported = [b.value for b in SupportedBrowsers]
-        raise ValueError(f"Unsupported browser: {browser}. Supported: {supported}")
+    FIREFOX = "firefox"
+    CHROME = "chrome"
+    SAFARI = "safari"
+    EDGE = "edge"
 
-    return browser_functions[browser](domain_name=domain)
+    @property
+    def get_cookie_jar(self) -> Callable:
+        match self:
+            case SupportedBrowser.FIREFOX:
+                return browser_cookie3.firefox
+            case SupportedBrowser.CHROME:
+                return browser_cookie3.chrome
+            case SupportedBrowser.SAFARI:
+                return browser_cookie3.safari
+            case SupportedBrowser.EDGE:
+                return browser_cookie3.edge
+            case _:
+                assert_never(self)
 
 
 def _extract_domain_cookies(cookie_jar, domain: str) -> Dict[str, str]:
@@ -58,18 +56,20 @@ def _extract_domain_cookies(cookie_jar, domain: str) -> Dict[str, str]:
     }
 
 
-def extract_cookies_from_browser(browser: str, domain: str) -> Dict[str, str]:
+def extract_cookies_from_browser(
+    browser: SupportedBrowser, domain: str
+) -> Dict[str, str]:
     """Extract cookies from browser for given domain."""
     try:
-        jar = _get_browser_cookie_jar(browser, domain)
+        jar = browser.get_cookie_jar(domain_name=domain)
         cookies = _extract_domain_cookies(jar, domain)
-        print(f"📊 Extracted {len(cookies)} total cookies from {browser.title()}")
+        print(f"📊 Extracted {len(cookies)} total cookies from {browser.value.title()}")
         return cookies
     except Exception as e:
-        print(f"❌ Failed to extract cookies from {browser.title()}: {e}")
-        if browser == "firefox":
+        print(f"❌ Failed to extract cookies from {browser.value.title()}: {e}")
+        if browser == SupportedBrowser.FIREFOX:
             print("💡 Make sure Firefox is closed or try using --browser chrome")
-        elif browser == "chrome":
+        elif browser == SupportedBrowser.CHROME:
             print("💡 You may need to grant keychain access on macOS")
         return {}
 

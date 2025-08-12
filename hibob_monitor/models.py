@@ -123,10 +123,6 @@ class ModifiedEmployee:
     full_name: str
     changes: List[FieldChange] = field(default_factory=list)
 
-    def __str__(self) -> str:
-        changes_str = ", ".join(str(change) for change in self.changes)
-        return f"{self.full_name} (ID: {self.id}, Email: {self.email}) - Changes: {changes_str}"
-
 
 @dataclass
 class ChangeReport:

@@ -2,7 +2,7 @@
 name = "hibob-monitor"
 version = "1.0.0"
 description = "HiBob Employee Monitor - Download active employees using browser cookie extraction"
-requires-python = ">=3.8"
+requires-python = ">=3.13"
 dependencies = [
     "browser_cookie3>=0.19.1",
 ]

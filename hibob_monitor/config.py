@@ -49,7 +49,7 @@ EMPLOYEE_DATA_KEYS: List[str] = ["employees", "people", "data", "results", "valu
 EMPLOYEE_FIELDS: List[str] = ["id", "email"]
 
 # Priority fields for table display
-PRIORITY_DISPLAY_FIELDS: List[str] = [
+TABLE_DISPLAY_FIELDS: List[str] = [
     "id",
     "displayName",
     "email",
@@ -74,4 +74,6 @@ IGNORED_EMPLOYEE_PATHS: set[str] = {
     "payroll.timeSinceLastSalaryChange",
     "avatarUrl",
     "about.avatar",
+    "work.directReports",
+    "work.indirectReports",
 }

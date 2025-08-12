@@ -4,7 +4,7 @@ Cache management for employee data with smart deduplication
 
 import json
 from dataclasses import dataclass
-import os
+from pathlib import Path
 from typing import List, Optional
 from .models import EmployeeList
 
@@ -47,13 +47,13 @@ def _deduplicate_consecutive(entries: List[EmployeeList]) -> List[EmployeeList]:
     return deduplicated
 
 
-def load_cache(cache_file: str) -> List[EmployeeList]:
+def load_cache(cache_file: Path) -> List[EmployeeList]:
     """Load cached employee data history from JSON file."""
-    if not os.path.exists(cache_file):
+    if not cache_file.exists():
         return []
 
     try:
-        with open(cache_file, "r", encoding="utf-8") as f:
+        with cache_file.open("r", encoding="utf-8") as f:
             data = json.load(f)
             entries_data = data.get("entries", [])
             return [EmployeeList.from_dict(entry_data) for entry_data in entries_data]
@@ -62,14 +62,14 @@ def load_cache(cache_file: str) -> List[EmployeeList]:
         return []
 
 
-def get_latest_cache(cache_file: str) -> Optional[EmployeeList]:
+def get_latest_cache(cache_file: Path) -> Optional[EmployeeList]:
     """Get the most recent cached employee list."""
     entries = load_cache(cache_file)
     return entries[-1] if entries else None
 
 
 def save_cache(
-    employee_list: EmployeeList, cache_file: str, config: CacheConfig = CacheConfig()
+    employee_list: EmployeeList, cache_file: Path, config: CacheConfig = CacheConfig()
 ) -> None:
     """Save employee data to cache with smart deduplication."""
     try:
@@ -88,7 +88,7 @@ def save_cache(
             all_entries = all_entries[-config.max_entries :]
 
         # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Save to file
         cache_data = {
@@ -99,7 +99,7 @@ def save_cache(
             "entries": [entry.to_dict() for entry in all_entries],
         }
 
-        with open(cache_file, "w", encoding="utf-8") as f:
+        with cache_file.open("w", encoding="utf-8") as f:
             json.dump(cache_data, f, indent=2, ensure_ascii=False)
 
     except IOError as e:
