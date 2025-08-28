@@ -33,12 +33,12 @@ def setup_logging() -> None:
 def run_hibob_monitor(
     domain: str,
     browser: SupportedBrowser,
+    cache_file: Path,
+    log_file: Path,
     list_format: OutputFormat = OutputFormat.TABLE,
     employee_list_path: Optional[Path] = None,
     output: OutputInfo = OutputInfo.CHANGES,
     enable_change_tracking: bool = True,
-    cache_file: Path = Path("data/employees_cache.json"),
-    log_file: Path = Path("data/employee_changes.log"),
 ) -> None:
     """Main application logic with change tracking."""
 

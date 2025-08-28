@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 from .cookies import SupportedBrowser
 from .output import OutputFormat
+import hibob_monitor
 
 
 class OutputInfo(StrEnum):
@@ -103,17 +104,18 @@ Supported browsers: firefox (default), chrome, safari, edge
         action="store_true",
         help="Disable change tracking (enabled by default)",
     )
+    default_data_dir = Path(hibob_monitor.__path__[0]).parent / "data"
     parser.add_argument(
         "--cache-file",
         type=Path,
-        default="data/employees_cache.json",
-        help="Cache file path (default: data/employees_cache.json)",
+        default=default_data_dir / "employees_cache.json",
+        help=f"Cache file path (default: {default_data_dir}/employees_cache.json)",
     )
     parser.add_argument(
         "--log-file",
         type=Path,
-        default="data/employee_changes.log",
-        help="Changes log file path (default: data/employee_changes.log)",
+        default=default_data_dir / "employee_changes.log",
+        help=f"Changes log file path (default: {default_data_dir}/employee_changes.log)",
     )
 
     return parser
