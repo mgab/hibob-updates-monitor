@@ -39,7 +39,10 @@ def _deep_diff(
         all_keys = set(old_obj.keys()) | set(new_obj.keys())
         for key in all_keys:
             changes += _deep_diff(
-                old_obj.get(key), new_obj.get(key), extend_path(path, key), ignored_paths
+                old_obj.get(key),
+                new_obj.get(key),
+                extend_path(path, key),
+                ignored_paths,
             )
 
     elif isinstance(old_obj, list) and isinstance(new_obj, list):
@@ -63,7 +66,9 @@ def _deep_diff(
 def _compare_employee_data(current: Employee, previous: Employee) -> List[FieldChange]:
     """Compare two employee objects and return list of field changes."""
     return _deep_diff(
-        old_obj=previous.raw_data, new_obj=current.raw_data, ignored_paths=IGNORED_EMPLOYEE_PATHS
+        old_obj=previous.raw_data,
+        new_obj=current.raw_data,
+        ignored_paths=IGNORED_EMPLOYEE_PATHS,
     )
 
 
@@ -98,14 +103,7 @@ def compare_employee_lists(
 
         if field_changes:  # Only add if there are field changes
             modified_employees.append(
-                ModifiedEmployee(
-                    id=current_emp.id,
-                    email=current_emp.email,
-                    full_name=current_emp.full_name,
-                    status=current_emp.status,
-                    department=current_emp.department,
-                    changes=field_changes,
-                )
+                ModifiedEmployee.from_employee_and_changes(current_emp, field_changes)
             )
 
     return ChangeReport(

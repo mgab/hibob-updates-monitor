@@ -4,7 +4,8 @@ Data models for HiBob employee monitoring
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Self
+
 
 @dataclass
 class EmployeeDescription:
@@ -13,10 +14,13 @@ class EmployeeDescription:
     full_name: str
     status: str
     department: str
+    site: str
+
 
 @dataclass
 class Employee(EmployeeDescription):
     """Structured employee data with normalized fields."""
+
     raw_data: Dict[str, Any]
 
     @classmethod
@@ -46,12 +50,15 @@ class Employee(EmployeeDescription):
 
         department = str(raw_data.get("work", {}).get("department", "")).strip()
 
+        site = str(raw_data.get("work", {}).get("site", "")).strip()
+
         return cls(
             id=emp_id,
             email=email,
             full_name=full_name,
             status=status,
             department=department,
+            site=site,
             raw_data=raw_data,
         )
 
@@ -122,7 +129,23 @@ class FieldChange:
 @dataclass
 class ModifiedEmployee(EmployeeDescription):
     """Represents an employee with field changes."""
+
     changes: List[FieldChange] = field(default_factory=list)
+
+    @classmethod
+    def from_employee_and_changes(
+        cls: type[Self], employee: EmployeeDescription, changes: List[FieldChange]
+    ) -> Self:
+        """Create a ModifiedEmployee from an EmployeeDescription and a list of changes."""
+        return cls(
+            id=employee.id,
+            email=employee.email,
+            full_name=employee.full_name,
+            status=employee.status,
+            department=employee.department,
+            site=employee.site,
+            changes=changes,
+        )
 
 
 @dataclass

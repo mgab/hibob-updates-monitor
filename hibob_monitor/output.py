@@ -11,7 +11,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Any, assert_never
 from .config import TABLE_DISPLAY_FIELDS
-from .models import EmployeeDescription, EmployeeList, ChangeReport, Employee, ModifiedEmployee
+from .models import EmployeeDescription, EmployeeList, ChangeReport
 
 
 logger = logging.getLogger(__name__)
@@ -141,7 +141,7 @@ def format_employees_as_csv(employee_list: EmployeeList) -> str:
 
 def _format_employee_summary(employee: EmployeeDescription) -> str:
     """Format employee for logging."""
-    return f"{employee.full_name} (ID: {employee.id}, Email: {employee.email}, Department: {employee.department})"
+    return f"{employee.full_name} (ID: {employee.id}, Email: {employee.email}, Department: {employee.department}, Site: {employee.site})"
 
 
 def format_change_report_as_text(change_report: ChangeReport) -> str:
@@ -182,7 +182,7 @@ def format_change_report_as_text(change_report: ChangeReport) -> str:
         f"\nSummary: {len(change_report.added)} added, {len(change_report.removed)} removed, {len(change_report.modified)} modified"
     )
 
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n\n"
 
 
 def write_to_file(content: str, filepath: Path) -> bool:

@@ -64,7 +64,7 @@ TABLE_DISPLAY_FIELDS: List[str] = [
 ACTIVE_STATUS_VALUES: List[str] = ["active", "employed", "current"]
 
 # Default cache configuration
-DEFAULT_CACHE_CONFIG = CacheConfig(max_entries=20, deduplicate_consecutive=True)
+DEFAULT_CACHE_CONFIG = CacheConfig(max_entries=200, deduplicate_consecutive=True)
 
 IGNORED_EMPLOYEE_PATHS: set[str] = {
     "work.yearsOfService",
@@ -81,4 +81,6 @@ IGNORED_EMPLOYEE_PATHS: set[str] = {
     "work.reportsTo.surname",
     "work.reportsTo.firstName",
     "work.reportsTo.id",
+    "work.secondLevelManager",
+    "work.manager",
 }
