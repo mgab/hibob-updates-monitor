@@ -17,3 +17,8 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "hibob_monitor"
 module-root = ""
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
