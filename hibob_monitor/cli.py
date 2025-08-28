@@ -11,7 +11,7 @@ from .output import OutputFormat
 import hibob_monitor
 
 
-class OutputInfo(StrEnum):
+class StdOutOutputInfo(StrEnum):
     """Enumeration of supported output types."""
 
     EMPLOYEE_LIST = "employee_list"
@@ -90,11 +90,11 @@ Supported browsers: firefox (default), chrome, safari, edge
     )
 
     parser.add_argument(
-        "--output",
+        "--stdout-output",
         "-o",
-        type=OutputInfo,
-        choices=[i for i in OutputInfo],
-        default=OutputInfo.CHANGES.value,
+        type=StdOutOutputInfo,
+        choices=[i for i in StdOutOutputInfo],
+        default=StdOutOutputInfo.CHANGES.value,
         help="Output information to print to stdout (default: changes)",
     )
 

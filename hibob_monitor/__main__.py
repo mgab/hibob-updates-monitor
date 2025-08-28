@@ -10,7 +10,7 @@ import sys
 from typing import Optional, assert_never
 
 from hibob_monitor.cookies import SupportedBrowser
-from .cli import create_argument_parser, show_setup_help, OutputInfo
+from .cli import create_argument_parser, show_setup_help, StdOutOutputInfo
 from .auth import authenticate_with_browser
 from .employees import get_active_employees
 from .output import append_to_file
@@ -37,7 +37,7 @@ def run_hibob_monitor(
     log_file: Path,
     list_format: OutputFormat = OutputFormat.TABLE,
     employee_list_path: Optional[Path] = None,
-    output: OutputInfo = OutputInfo.CHANGES,
+    output: StdOutOutputInfo = StdOutOutputInfo.CHANGES,
     enable_change_tracking: bool = True,
 ) -> None:
     """Main application logic with change tracking."""
@@ -99,12 +99,12 @@ def run_hibob_monitor(
         save_cache(employee_list, cache_file, DEFAULT_CACHE_CONFIG)
 
     match output:
-        case OutputInfo.CHANGES:
+        case StdOutOutputInfo.CHANGES:
             if change_report_text is not None:
                 sys.stdout.write(change_report_text)
-        case OutputInfo.EMPLOYEE_LIST:
+        case StdOutOutputInfo.EMPLOYEE_LIST:
             sys.stderr.write(formatted_list)
-        case OutputInfo.NONE:
+        case StdOutOutputInfo.NONE:
             pass
         case _:
             assert_never(output)
@@ -174,7 +174,7 @@ def main() -> None:
     if not args.domain:
         parser.error("--domain is required (use --setup-help for setup instructions)")
 
-    if args.output == OutputInfo.CHANGES and args.disable_change_tracking:
+    if args.output == StdOutOutputInfo.CHANGES and args.disable_change_tracking:
         parser.error("Change tracking must be enabled to output changes.")
 
     run_hibob_monitor(
