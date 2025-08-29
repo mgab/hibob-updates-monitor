@@ -174,7 +174,7 @@ def main() -> None:
     if not args.domain:
         parser.error("--domain is required (use --setup-help for setup instructions)")
 
-    if args.output == StdOutOutputInfo.CHANGES and args.disable_change_tracking:
+    if args.stdout_output == StdOutOutputInfo.CHANGES and args.disable_change_tracking:
         parser.error("Change tracking must be enabled to output changes.")
 
     run_hibob_monitor(
@@ -182,7 +182,7 @@ def main() -> None:
         browser=args.browser,
         list_format=args.format,
         employee_list_path=args.employee_list_path,
-        output=args.output,
+        output=args.stdout_output,
         enable_change_tracking=not args.disable_change_tracking,
         cache_file=args.cache_file,
         log_file=args.log_file,
