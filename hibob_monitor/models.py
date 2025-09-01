@@ -4,7 +4,7 @@ Data models for HiBob employee monitoring
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Any, Self
+from typing import Any, Self
 
 
 @dataclass
@@ -21,10 +21,10 @@ class EmployeeDescription:
 class Employee(EmployeeDescription):
     """Structured employee data with normalized fields."""
 
-    raw_data: Dict[str, Any]
+    raw_data: dict[str, Any]
 
     @classmethod
-    def from_raw_data(cls, raw_data: Dict[str, Any]) -> "Employee":
+    def from_raw_data(cls, raw_data: dict[str, Any]) -> "Employee":
         """Create Employee from raw API response data."""
         # Extract normalized fields
         emp_id = str(raw_data.get("id", ""))
@@ -62,7 +62,7 @@ class Employee(EmployeeDescription):
             raw_data=raw_data,
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare employees based on raw data for change detection."""
         if not isinstance(other, Employee):
             return False
@@ -79,21 +79,21 @@ class EmployeeList:
 
     timestamp: datetime
     count: int
-    employees: List[Employee] = field(default_factory=list)
+    employees: list[Employee] = field(default_factory=list)
 
     @classmethod
-    def from_raw_data(cls, employees_data: List[Dict[str, Any]]) -> "EmployeeList":
+    def from_raw_data(cls, employees_data: list[dict[str, Any]]) -> "EmployeeList":
         """Create EmployeeList from raw API response data."""
         employees = [Employee.from_raw_data(emp_data) for emp_data in employees_data]
         return cls(timestamp=datetime.now(), count=len(employees), employees=employees)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare EmployeeLists based on employee data (ignoring timestamp)."""
         if not isinstance(other, EmployeeList):
             return False
         return self.employees == other.employees
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -102,7 +102,7 @@ class EmployeeList:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EmployeeList":
+    def from_dict(cls, data: dict[str, Any]) -> "EmployeeList":
         """Create from dictionary (for cache loading)."""
         timestamp = datetime.fromisoformat(data["timestamp"])
         employees_data = data.get("employees", [])
@@ -130,13 +130,13 @@ class FieldChange:
 class ModifiedEmployee(EmployeeDescription):
     """Represents an employee with field changes."""
 
-    changes: List[FieldChange] = field(default_factory=list)
+    changes: list[FieldChange] = field(default_factory=list)
 
     @classmethod
     def from_employee_and_changes(
-        cls: type[Self], employee: EmployeeDescription, changes: List[FieldChange]
+        cls: type[Self], employee: EmployeeDescription, changes: list[FieldChange]
     ) -> Self:
-        """Create a ModifiedEmployee from an EmployeeDescription and a list of changes."""
+        "Create a ModifiedEmployee from an EmployeeDescription and a list of changes."
         return cls(
             id=employee.id,
             email=employee.email,
@@ -154,9 +154,9 @@ class ChangeReport:
 
     current_timestamp: datetime
     previous_timestamp: datetime
-    added: List[Employee] = field(default_factory=list)
-    removed: List[Employee] = field(default_factory=list)
-    modified: List[ModifiedEmployee] = field(default_factory=list)
+    added: list[Employee] = field(default_factory=list)
+    removed: list[Employee] = field(default_factory=list)
+    modified: list[ModifiedEmployee] = field(default_factory=list)
 
     @property
     def total_changes(self) -> int:

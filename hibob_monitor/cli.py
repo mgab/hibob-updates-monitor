@@ -3,12 +3,14 @@ Command-line interface and help functions
 """
 
 import argparse
+import sys
 from enum import StrEnum
 from pathlib import Path
-import sys
+
+import hibob_monitor
+
 from .cookies import SupportedBrowser
 from .output import OutputFormat
-import hibob_monitor
 
 
 class StdOutOutputInfo(StrEnum):
@@ -48,14 +50,17 @@ def show_setup_help() -> None:
 def create_argument_parser() -> argparse.ArgumentParser:
     """Create and configure argument parser."""
     parser = argparse.ArgumentParser(
-        description="Download active employees from HiBob using automatic browser cookie extraction",
+        description=(
+            "Download active employees from HiBob using automatic browser cookie "
+            "extraction"
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 hibob_monitor --domain mycompany.hibob.com
-  python3 hibob_monitor --domain mycompany.hibob.com --browser chrome
-  python3 hibob_monitor --domain mycompany.hibob.com --format json --output employees.json
-  python3 hibob_monitor --domain mycompany.hibob.com --disable-change-tracking
+  hibob_monitor --domain mycompany.hibob.com
+  hibob_monitor --domain mycompany.hibob.com --browser chrome
+  hibob_monitor --domain mycompany.hibob.com --format json --output employees.json
+  hibob_monitor --domain mycompany.hibob.com --disable-change-tracking
 
 Change Tracking (enabled by default):
   • Automatically detects added, removed, and modified employees
@@ -71,14 +76,14 @@ Supported browsers: firefox (default), chrome, safari, edge
     parser.add_argument(
         "--browser",
         type=SupportedBrowser,
-        choices=[i for i in SupportedBrowser],
+        choices=list(SupportedBrowser),
         default=SupportedBrowser.FIREFOX.value,
         help="Browser to extract cookies from (default: firefox)",
     )
     parser.add_argument(
         "--format",
         type=OutputFormat,
-        choices=[i for i in OutputFormat],
+        choices=list(OutputFormat),
         default=OutputFormat.TABLE.value,
         help="Employee list output format (default: table)",
     )
@@ -93,7 +98,7 @@ Supported browsers: firefox (default), chrome, safari, edge
         "--stdout-output",
         "-o",
         type=StdOutOutputInfo,
-        choices=[i for i in StdOutOutputInfo],
+        choices=list(StdOutOutputInfo),
         default=StdOutOutputInfo.CHANGES.value,
         help="Output information to print to stdout (default: changes)",
     )
@@ -115,7 +120,9 @@ Supported browsers: firefox (default), chrome, safari, edge
         "--log-file",
         type=Path,
         default=default_data_dir / "employee_changes.log",
-        help=f"Changes log file path (default: {default_data_dir}/employee_changes.log)",
+        help=(
+            f"Changes log file path (default: {default_data_dir}/employee_changes.log)"
+        ),
     )
 
     return parser

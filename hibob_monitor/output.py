@@ -2,17 +2,16 @@
 Output formatting for structured employee data and change reports
 """
 
-import json
 import csv
 import io
+import json
 import logging
-import os
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Any, assert_never
-from .config import TABLE_DISPLAY_FIELDS
-from .models import EmployeeDescription, EmployeeList, ChangeReport
+from typing import Any, assert_never
 
+from .config import TABLE_DISPLAY_FIELDS
+from .models import ChangeReport, EmployeeDescription, EmployeeList
 
 logger = logging.getLogger(__name__)
 
@@ -37,22 +36,22 @@ class OutputFormat(Enum):
                 assert_never(self)
 
 
-def _get_table_display_fields(flat_employee_data: List[Dict[str, Any]]) -> List[str]:
+def _get_table_display_fields(flat_employee_data: list[dict[str, Any]]) -> list[str]:
     """Determine which fields to display in table."""
     if not flat_employee_data:
         return []
 
-    all_fields = {field for emp in flat_employee_data for field in emp.keys()}
+    all_fields = {field for emp in flat_employee_data for field in emp}
 
     return [f for f in TABLE_DISPLAY_FIELDS if f in all_fields]
 
 
 def _flatten_dict(
-    data: Dict[str, Any],
-) -> Dict[str, Any]:
+    data: dict[str, Any],
+) -> dict[str, Any]:
     """Flatten a nested dict (of dicts and lists) to a single level dict."""
 
-    def _flatten_recursive(data: Any, path: str = "") -> Dict[str, Any]:
+    def _flatten_recursive(data: Any, path: str = "") -> dict[str, Any]:  # noqa: ANN401
         """Recursive helper to flatten dict."""
         if isinstance(data, dict):
             result = {}
@@ -60,14 +59,13 @@ def _flatten_dict(
                 new_key = f"{path}.{key}" if path else key
                 result.update(_flatten_recursive(value, new_key))
             return result
-        elif isinstance(data, list):
+        if isinstance(data, list):
             result = {}
             for i, item in enumerate(data):
                 new_key = f"{path}.[{i}]" if path else f"[{i}]"
                 result.update(_flatten_recursive(item, new_key))
             return result
-        else:
-            return {path: data}
+        return {path: data}
 
     return _flatten_recursive(data)
 
@@ -124,9 +122,7 @@ def format_employees_as_csv(employee_list: EmployeeList) -> str:
     ]
 
     # Get all possible fields from all employees
-    all_fields = sorted(
-        {field for emp in flattened_employee_data for field in emp.keys()}
-    )
+    all_fields = sorted({field for emp in flattened_employee_data for field in emp})
 
     # Create CSV output
     output = io.StringIO()
@@ -141,7 +137,10 @@ def format_employees_as_csv(employee_list: EmployeeList) -> str:
 
 def _format_employee_summary(employee: EmployeeDescription) -> str:
     """Format employee for logging."""
-    return f"{employee.full_name} (ID: {employee.id}, Email: {employee.email}, Department: {employee.department}, Site: {employee.site})"
+    return (
+        f"{employee.full_name} (ID: {employee.id}, Email: {employee.email}, "
+        f"Department: {employee.department}, Site: {employee.site})"
+    )
 
 
 def format_change_report_as_text(change_report: ChangeReport) -> str:
@@ -152,22 +151,26 @@ def format_change_report_as_text(change_report: ChangeReport) -> str:
     lines = []
     lines.append("\n" + "=" * 60)
     lines.append(
-        f"Changes detected at {change_report.current_timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+        "Changes detected at "
+        f"{change_report.current_timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
     )
     lines.append(
-        f"Compared with data from {change_report.previous_timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+        "Compared with data from "
+        f"{change_report.previous_timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
     )
     lines.append("=" * 60)
 
     if change_report.added:
         lines.append(f"\n📈 ADDED EMPLOYEES ({len(change_report.added)}):")
-        for emp in change_report.added:
-            lines.append(f"  + {_format_employee_summary(emp)}")
+        lines.extend(
+            f"  + {_format_employee_summary(emp)}" for emp in change_report.added
+        )
 
     if change_report.removed:
         lines.append(f"\n📉 REMOVED EMPLOYEES ({len(change_report.removed)}):")
-        for emp in change_report.removed:
-            lines.append(f"  - {_format_employee_summary(emp)}")
+        lines.extend(
+            f"  - {_format_employee_summary(emp)}" for emp in change_report.removed
+        )
 
     if change_report.modified:
         lines.append(f"\n📝 MODIFIED EMPLOYEES ({len(change_report.modified)}):")
@@ -175,11 +178,12 @@ def format_change_report_as_text(change_report: ChangeReport) -> str:
             lines.append(f"  ~ {_format_employee_summary(modified_emp)}")
 
             # Show field changes
-            for change in modified_emp.changes:
-                lines.append(f"    {change}")
+            lines.extend(f"    {change}" for change in modified_emp.changes)
 
     lines.append(
-        f"\nSummary: {len(change_report.added)} added, {len(change_report.removed)} removed, {len(change_report.modified)} modified"
+        f"\nSummary: {len(change_report.added)} added,"
+        f" {len(change_report.removed)} removed, "
+        f"{len(change_report.modified)} modified"
     )
 
     return "\n".join(lines) + "\n\n"
@@ -191,19 +195,23 @@ def write_to_file(content: str, filepath: Path) -> bool:
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with filepath.open("w", encoding="utf-8") as f:
             f.write(content)
-        return True
-    except IOError as e:
-        logger.error(f"Error writing to {filepath}: {e}")
+    except OSError as e:
+        msg = f"Error writing to {filepath}: {e}"
+        logger.error(msg)
         return False
+    else:
+        return True
 
 
 def append_to_file(content: str, filepath: Path) -> bool:
     """Append content to a file, creating directory if needed."""
     try:
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         with filepath.open("a", encoding="utf-8") as f:
             f.write(content)
-        return True
-    except IOError as e:
-        logger.error(f"Error appending to {filepath}: {e}")
+    except OSError as e:
+        msg = f"Error appending to {filepath}: {e}"
+        logger.error(msg)
         return False
+    else:
+        return True

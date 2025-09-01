@@ -20,5 +20,31 @@ module-root = ""
 
 [dependency-groups]
 dev = [
+    "mypy>=1.17.1",
     "pytest>=8.4.1",
+    "ruff>=0.12.11",
+]
+
+[tool.mypy]
+strict = true
+
+[tool.ruff.lint]
+# https://docs.astral.sh/ruff/rules/
+select = ["ALL"]
+ignore = [
+    # Modules
+    "D",   # pydocstyle
+
+
+    # Specific rules
+    "TRY400",  # logging.exception instead of logging.error
+    ## Conflicting rules
+    "COM812",
+    "PLC0414",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"!tests/" = [
+    "S101",  # assert
+    "T201",  # print
 ]

@@ -5,22 +5,26 @@ Main entry point using modular structure with change tracking
 """
 
 import logging
-from pathlib import Path
 import sys
-from typing import Optional, assert_never
+from pathlib import Path
+from typing import assert_never
 
 from hibob_monitor.cookies import SupportedBrowser
-from .cli import create_argument_parser, show_setup_help, StdOutOutputInfo
+
 from .auth import authenticate_with_browser
-from .employees import get_active_employees
-from .output import append_to_file
-from .output import format_change_report_as_text, OutputFormat, write_to_file
-from .domain_utils import build_base_url
 from .cache import get_latest_cache, save_cache
 from .change_detection import compare_employee_lists
+from .cli import StdOutOutputInfo, create_argument_parser, show_setup_help
 from .config import DEFAULT_CACHE_CONFIG
-from .models import EmployeeList, ChangeReport
-
+from .domain_utils import build_base_url
+from .employees import get_active_employees
+from .models import ChangeReport, EmployeeList
+from .output import (
+    OutputFormat,
+    append_to_file,
+    format_change_report_as_text,
+    write_to_file,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,18 +40,19 @@ def run_hibob_monitor(
     cache_file: Path,
     log_file: Path,
     list_format: OutputFormat = OutputFormat.TABLE,
-    employee_list_path: Optional[Path] = None,
+    employee_list_path: Path | None = None,
     output: StdOutOutputInfo = StdOutOutputInfo.CHANGES,
+    *,
     enable_change_tracking: bool = True,
 ) -> None:
     """Main application logic with change tracking."""
 
     logger.info("🔍 HiBob Employee Monitor")
-    logger.info(f"📍 Domain: {domain}")
-    logger.info(f"🌐 Browser: {browser.value.title()}")
+    logger.info("📍 Domain: %s", domain)
+    logger.info("🌐 Browser: %s", browser.value.title())
     if enable_change_tracking:
         logger.info(
-            f"📝 Change tracking: enabled (cache: {cache_file}, log: {log_file})"
+            "📝 Change tracking: enabled (cache: %s, log: %s)", cache_file, log_file
         )
     else:
         logger.info("📝 Change tracking: disabled")
@@ -59,7 +64,7 @@ def run_hibob_monitor(
         logger.error("❌ No active employees found.")
         sys.exit(1)
 
-    logger.info(f"\n📊 Found {employee_list.count} active employees")
+    logger.info("📊 Found %s active employees", employee_list.count)
 
     formatted_list = list_format.format(employee_list)
     if employee_list_path:
@@ -67,7 +72,9 @@ def run_hibob_monitor(
         success = write_to_file(formatted_list, employee_list_path)
         if success:
             logger.info(
-                f"📄 Employee list saved as {list_format.value} to {employee_list_path}"
+                "📄 Employee list saved as %s to %s",
+                list_format.value,
+                employee_list_path,
             )
 
     # Handle change tracking
@@ -82,7 +89,10 @@ def run_hibob_monitor(
             logger.info("✅ No changes detected since last run")
         else:
             logger.info(
-                f"📈 Changes detected: {len(change_report.added)} added, {len(change_report.removed)} removed, {len(change_report.modified)} modified"
+                "📈 Changes detected: %s added, %s removed, %s modified",
+                len(change_report.added),
+                len(change_report.removed),
+                len(change_report.modified),
             )
             change_report_text = format_change_report_as_text(change_report)
             # Append to the log file
@@ -90,10 +100,10 @@ def run_hibob_monitor(
 
             if success:
                 logger.info(
-                    f"📝 {change_report.total_changes} changes logged to {log_file}"
+                    "📝 %s changes logged to %s", change_report.total_changes, log_file
                 )
             else:
-                logger.warning(f"⚠️  Warning: Could not write to log file {log_file}")
+                logger.warning("⚠️  Warning: Could not write to log file %s", log_file)
 
         # Save current data to cache
         save_cache(employee_list, cache_file, DEFAULT_CACHE_CONFIG)
@@ -131,7 +141,7 @@ def fetch_new_employee_list(
 
 def get_changes_since_latest_cache(
     employee_list: EmployeeList, cache_file: Path
-) -> Optional[ChangeReport]:
+) -> ChangeReport | None:
     """Get changes since the latest cache."""
     previous_employee_list = get_latest_cache(cache_file)
     if previous_employee_list is not None:
@@ -151,13 +161,15 @@ def get_change_report_since_latest_run(
 
         if change_report.has_changes:
             logger.info(
-                f"📈 Changes detected: {len(change_report.added)} added, {len(change_report.removed)} removed, {len(change_report.modified)} modified"
+                "📈 Changes detected: %s added, %s removed, %s modified",
+                len(change_report.added),
+                len(change_report.removed),
+                len(change_report.modified),
             )
         else:
             logger.info("✅ No changes detected since last run")
         return change_report
-    else:
-        return None
+    return None
 
 
 def main() -> None:

@@ -3,16 +3,17 @@ HTTP request utilities
 """
 
 import json
-import urllib.request
 import urllib.error
-from typing import Dict, Optional, Any
+import urllib.request
+from typing import Any
+
 from .config import DEFAULT_HEADERS
 
 
 def _create_request(
     url: str,
-    headers: Optional[Dict[str, str]] = None,
-    cookies: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
+    cookies: dict[str, str] | None = None,
 ) -> urllib.request.Request:
     """Create HTTP request with headers and cookies."""
     req = urllib.request.Request(url, headers=headers or DEFAULT_HEADERS)
@@ -27,11 +28,15 @@ def _create_request(
 
 
 def make_request(
-    url: str, cookies: Optional[Dict[str, str]] = None
-) -> Optional[Dict[str, Any]]:
+    url: str, cookies: dict[str, str] | None = None
+) -> dict[str, Any] | None:
     """Make authenticated request to API."""
     try:
         req = _create_request(url, DEFAULT_HEADERS, cookies)
+
+        if not url.startswith(("http:", "https:")):
+            msg = "URL must start with 'http:' or 'https:'"
+            raise ValueError(msg)
 
         with urllib.request.urlopen(req, timeout=30) as response:
             if response.status == 200:
@@ -41,6 +46,4 @@ def make_request(
     except urllib.error.HTTPError as e:
         if e.code != 401:  # Don't log 401 errors, they're expected during testing
             pass
-        return None
-    except Exception:
         return None
