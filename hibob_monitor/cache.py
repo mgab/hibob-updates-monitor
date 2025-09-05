@@ -6,7 +6,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+
 from .models import EmployeeList
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class CacheConfig:
     deduplicate_consecutive: bool = True
 
 
-def _deduplicate_consecutive(entries: List[EmployeeList]) -> List[EmployeeList]:
+def _deduplicate_consecutive(entries: list[EmployeeList]) -> list[EmployeeList]:
     """Remove consecutive duplicate entries, keeping only first and last."""
     if not entries:
         return entries
@@ -50,7 +50,7 @@ def _deduplicate_consecutive(entries: List[EmployeeList]) -> List[EmployeeList]:
     return deduplicated
 
 
-def load_cache(cache_file: Path) -> List[EmployeeList]:
+def load_cache(cache_file: Path) -> list[EmployeeList]:
     """Load cached employee data history from JSON file."""
     if not cache_file.exists():
         return []
@@ -60,27 +60,30 @@ def load_cache(cache_file: Path) -> List[EmployeeList]:
             data = json.load(f)
             entries_data = data.get("entries", [])
             return [EmployeeList.from_dict(entry_data) for entry_data in entries_data]
-    except (json.JSONDecodeError, IOError) as e:
-        logger.warning(f"⚠️  Warning: Could not load cache from {cache_file}: {e}")
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("⚠️  Warning: Could not load cache from %s: %s", cache_file, e)
         return []
 
 
-def get_latest_cache(cache_file: Path) -> Optional[EmployeeList]:
+def get_latest_cache(cache_file: Path) -> EmployeeList | None:
     """Get the most recent cached employee list."""
     entries = load_cache(cache_file)
     return entries[-1] if entries else None
 
 
 def save_cache(
-    employee_list: EmployeeList, cache_file: Path, config: CacheConfig = CacheConfig()
+    employee_list: EmployeeList, cache_file: Path, config: CacheConfig | None = None
 ) -> None:
     """Save employee data to cache with smart deduplication."""
+    if config is None:
+        config = CacheConfig()
+
     try:
         # Load existing cache
         existing_entries = load_cache(cache_file)
 
         # Add new entry
-        all_entries = existing_entries + [employee_list]
+        all_entries = [*existing_entries, employee_list]
 
         # Apply deduplication if enabled
         if config.deduplicate_consecutive:
@@ -105,5 +108,5 @@ def save_cache(
         with cache_file.open("w", encoding="utf-8") as f:
             json.dump(cache_data, f, indent=2, ensure_ascii=False)
 
-    except IOError as e:
-        logger.warning(f"⚠️  Warning: Could not save cache to {cache_file}: {e}")
+    except OSError as e:
+        logger.warning("⚠️  Warning: Could not save cache to %s: %s", cache_file, e)

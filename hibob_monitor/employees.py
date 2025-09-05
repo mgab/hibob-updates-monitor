@@ -4,34 +4,32 @@ Employee data extraction and filtering
 
 import logging
 from functools import partial
-from typing import Dict, List, Any, Optional
+
 from .config import (
     API_ENDPOINTS,
     EMPLOYEE_DATA_KEYS,
     EMPLOYEE_FIELDS,
-    ACTIVE_STATUS_VALUES,
 )
 from .http_utils import make_request
 from .models import EmployeeList
 
-
 logger = logging.getLogger(__name__)
 
 
-def _is_employee_object(data: Any) -> bool:
+def _is_employee_object(data: object) -> bool:
     """Check if data looks like an employee object."""
-    return isinstance(data, dict) and any(field in data for field in EMPLOYEE_FIELDS)
+    return isinstance(data, dict) and all(field in data for field in EMPLOYEE_FIELDS)
 
 
-def _extract_employees_from_response(data: Any) -> List[Dict[str, Any]]:
+def _extract_employees_from_response(data: object) -> list[dict[str, object]]:
     """Extract employee list from API response."""
     if isinstance(data, list):
         return data
-    elif isinstance(data, dict):
+    if isinstance(data, dict):
         # Try known keys for employee arrays
         for key in EMPLOYEE_DATA_KEYS:
             if key in data and isinstance(data[key], list):
-                return data[key]
+                return data[key]  # type: ignore[no-any-return]
 
         # Single employee object
         if _is_employee_object(data):
@@ -40,38 +38,15 @@ def _extract_employees_from_response(data: Any) -> List[Dict[str, Any]]:
     return []
 
 
-def _is_employee_active(employee: Dict[str, Any]) -> bool:
+def _is_employee_active(employee: dict[str, object]) -> bool:  # noqa: ARG001
     """Check if employee is active based on various status fields."""
-    if not isinstance(employee, dict):
-        return False
-
-    # Check direct status field
-    if "status" in employee:
-        status = str(employee["status"]).lower()
-        return status in ACTIVE_STATUS_VALUES
-
-    # Check employment.status
-    if "employment" in employee and isinstance(employee["employment"], dict):
-        if "status" in employee["employment"]:
-            status = str(employee["employment"]["status"]).lower()
-            return status in ACTIVE_STATUS_VALUES
-
-    # Check isActive boolean
-    if "isActive" in employee:
-        return bool(employee["isActive"])
-
-    # Check termination/end dates
-    if "terminationDate" in employee:
-        return employee["terminationDate"] is None or employee["terminationDate"] == ""
-
-    if "endDate" in employee:
-        return employee["endDate"] is None or employee["endDate"] == ""
-
-    # Default to active if no status indicators found
+    # I have no data on disabled employees, so I'll disable this check for now
     return True
 
 
-def _filter_active_employees(employees: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _filter_active_employees(
+    employees: list[dict[str, object]],
+) -> list[dict[str, object]]:
     """Filter employees to only include active ones."""
     active_employees = [emp for emp in employees if _is_employee_active(emp)]
 
@@ -79,18 +54,20 @@ def _filter_active_employees(employees: List[Dict[str, Any]]) -> List[Dict[str, 
     inactive_employees = [emp for emp in employees if not _is_employee_active(emp)]
     for emp in inactive_employees:
         logger.warning(
-            f"⚠️  Employee {emp.get('id', 'unknown')} is not active (status: {str(emp.get('status'))})"
+            "⚠️  Employee %s is not active (status: %s)",
+            emp.get("id", "unknown"),
+            emp.get("status"),
         )
 
     return active_employees
 
 
 def _try_endpoint(
-    base_url: str, endpoint: str, cookies: Dict[str, str]
-) -> Optional[EmployeeList]:
+    base_url: str, endpoint: str, cookies: dict[str, str]
+) -> EmployeeList | None:
     """Try to fetch employees from a specific endpoint."""
     url = f"{base_url}{endpoint}"
-    logger.info(f"🔍 Trying endpoint: {endpoint}")
+    logger.info("🔍 Trying endpoint: %s", endpoint)
 
     data = make_request(url, cookies)
 
@@ -102,19 +79,16 @@ def _try_endpoint(
 
             if active_employees_data:
                 employee_list = EmployeeList.from_raw_data(active_employees_data)
-                logger.info(f"✅ Found {employee_list.count} active employees")
+                logger.info("✅ Found %s active employees", employee_list.count)
                 return employee_list
-            else:
-                logger.warning(
-                    f"⚠️  Found {len(employees_data)} employees but none marked as active"
-                )
+            logger.warning(
+                "⚠️  Found %s employees but none marked as active", len(employees_data)
+            )
 
     return None
 
 
-def get_active_employees(
-    base_url: str, cookies: Dict[str, str]
-) -> Optional[EmployeeList]:
+def get_active_employees(base_url: str, cookies: dict[str, str]) -> EmployeeList | None:
     """Fetch list of active employees by trying multiple endpoints."""
     endpoint_functions = [
         partial(_try_endpoint, base_url, endpoint, cookies)

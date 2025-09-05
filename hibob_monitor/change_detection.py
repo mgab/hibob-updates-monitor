@@ -2,40 +2,41 @@
 Change detection and logging for employee data using structured models
 """
 
-from typing import Dict, List, Any, Tuple, Set
+from collections.abc import Container
 from itertools import zip_longest
-from .models import EmployeeList, Employee, ChangeReport, FieldChange, ModifiedEmployee
+
 from .config import IGNORED_EMPLOYEE_PATHS
+from .models import ChangeReport, Employee, EmployeeList, FieldChange, ModifiedEmployee
 
 
-def _get_employee_key(employee: Employee) -> Tuple[str, str]:
+def _get_employee_key(employee: Employee) -> tuple[str, str]:
     """Extract unique identifier (id, email) from employee."""
     return (employee.id, employee.email)
 
 
-def _build_employee_index(employees: List[Employee]) -> Dict[Tuple[str, str], Employee]:
+def _build_employee_index(employees: list[Employee]) -> dict[tuple[str, str], Employee]:
     """Build index of employees by their unique key."""
     return {_get_employee_key(emp): emp for emp in employees}
 
 
 def _deep_diff(
-    old_obj: Any, new_obj: Any, path: str = "", ignored_paths: Set[str] = set()
-) -> List[FieldChange]:
+    old_obj: object,
+    new_obj: object,
+    path: str = "",
+    ignored_paths: Container[str] = frozenset(),
+) -> list[FieldChange]:
     """Compare two objects recursively and return detailed changes."""
 
     def extend_path(path: str, extra: str) -> str:
         """Extend the current path with an additional segment."""
         return f"{path}.{extra}" if path else extra
 
-    changes = []
+    changes: list[FieldChange] = []
 
-    if path in ignored_paths:
+    if path in ignored_paths or old_obj == new_obj:
         return changes
 
-    elif old_obj == new_obj:
-        return changes
-
-    elif isinstance(old_obj, dict) and isinstance(new_obj, dict):
+    if isinstance(old_obj, dict) and isinstance(new_obj, dict):
         all_keys = set(old_obj.keys()) | set(new_obj.keys())
         for key in all_keys:
             changes += _deep_diff(
@@ -63,7 +64,7 @@ def _deep_diff(
     return changes
 
 
-def _compare_employee_data(current: Employee, previous: Employee) -> List[FieldChange]:
+def _compare_employee_data(current: Employee, previous: Employee) -> list[FieldChange]:
     """Compare two employee objects and return list of field changes."""
     return _deep_diff(
         old_obj=previous.raw_data,
@@ -82,17 +83,17 @@ def compare_employee_lists(
     current_keys = set(current_index.keys())
     previous_keys = set(previous_index.keys())
 
-    added_employees = []
-    removed_employees = []
-    modified_employees = []
+    added_employees: list[Employee] = []
+    removed_employees: list[Employee] = []
+    modified_employees: list[ModifiedEmployee] = []
 
     # Find added employees
-    for key in current_keys - previous_keys:
-        added_employees.append(current_index[key])
+    added_employees.extend(current_index[key] for key in current_keys - previous_keys)
 
     # Find removed employees
-    for key in previous_keys - current_keys:
-        removed_employees.append(previous_index[key])
+    removed_employees.extend(
+        previous_index[key] for key in previous_keys - current_keys
+    )
 
     # Find modified employees (same key, different data)
     for key in current_keys & previous_keys:
