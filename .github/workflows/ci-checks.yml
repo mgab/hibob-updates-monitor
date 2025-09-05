@@ -50,16 +50,6 @@ jobs:
           version: latest
           python-version: ${{ matrix.python-version }}
 
-      - name: Install pinned dependencies
-        if: "${{ ! inputs.ignore-pinned-requirements }}"
-        run: |
-          make install-dev-requirements
-
-      - name: Install latest dependencies
-        if: "${{ inputs.ignore-pinned-requirements }}"
-        run: |
-          update-lock-requirements
-
       - name: Check format
         if: "${{ ! inputs.skip-linting }}"
         run: |
