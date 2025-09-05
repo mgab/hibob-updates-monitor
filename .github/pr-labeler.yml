@@ -1,0 +1,7 @@
+# config file
+feature: ['feature/*', 'new/*']
+bug: ['bug/*', 'issue/*', 'fix/*', 'bugfix/*']
+dependencies: ['update/*']
+maintenance: ['maintenance/*', 'chore/*']
+docs: ['docs/*']
+contract-change: ['contract_change/*']

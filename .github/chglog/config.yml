@@ -1,0 +1,10 @@
+style: github
+template: CHANGELOG.tpl.md
+info:
+  title: "CHANGE LOG"
+  repository_url: https://github.com/mgab/hibob-updates-monitor
+options:
+  header:
+    pattern: "^(.*)$"
+    pattern_maps:
+      - Subject

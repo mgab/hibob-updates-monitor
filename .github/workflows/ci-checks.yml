@@ -1,0 +1,79 @@
+name: 🔍 check linting & tests
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - devel
+      - main
+
+  push:
+    branches:
+      - main
+      - devel
+      - snapshot/*
+
+  workflow_call:
+    inputs:
+      skip-linting:
+        description: "Skip lining and only run tests"
+        required: false
+        type: boolean
+        default: false
+      ignore-pinned-requirements:
+        description: "Use versions pinned in requirements file or the latests versions"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  linting-and-tests:
+    runs-on:
+      - ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GHA_TRIGGER_TOKEN }}
+
+      - name: Setup UV & python
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: latest
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pinned dependencies
+        if: "${{ ! inputs.ignore-pinned-requirements }}"
+        run: |
+          make install-dev-requirements
+
+      - name: Install latest dependencies
+        if: "${{ inputs.ignore-pinned-requirements }}"
+        run: |
+          update-lock-requirements
+
+      - name: Check format
+        if: "${{ ! inputs.skip-linting }}"
+        run: |
+          make check-format
+
+      - name: Check typing
+        run: |
+          make check-typing
+
+      - name: Check tests
+        run: |
+          make check-tests
+
+      - name: Check integration tests
+        run: |
+          make check-it-tests
