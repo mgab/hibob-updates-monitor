@@ -62,9 +62,6 @@ TABLE_DISPLAY_FIELDS: list[str] = [
     "work.reportsTo.displayName",
 ]
 
-# Status values that indicate an active employee
-ACTIVE_STATUS_VALUES: list[str] = ["active", "employed", "current"]
-
 # Default cache configuration
 DEFAULT_CACHE_CONFIG = CacheConfig(max_entries=200, deduplicate_consecutive=True)
 

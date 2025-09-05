@@ -5,7 +5,7 @@ Browser cookie extraction functionality
 import logging
 import sys
 from enum import Enum
-from http.cookiejar import CookieJar
+from http.cookiejar import Cookie, CookieJar
 from typing import Protocol, assert_never
 
 from .config import AUTH_KEYWORDS
@@ -46,21 +46,23 @@ class SupportedBrowser(Enum):
     def get_cookie_jar(self) -> CookieExtractorCallable:
         match self:
             case SupportedBrowser.FIREFOX:
-                return browser_cookie3.firefox
+                return browser_cookie3.firefox  # type: ignore[no-any-return]
             case SupportedBrowser.CHROME:
-                return browser_cookie3.chrome
+                return browser_cookie3.chrome  # type: ignore[no-any-return]
             case SupportedBrowser.SAFARI:
-                return browser_cookie3.safari
+                return browser_cookie3.safari  # type: ignore[no-any-return]
             case SupportedBrowser.EDGE:
-                return browser_cookie3.edge
+                return browser_cookie3.edge  # type: ignore[no-any-return]
             case _:
                 assert_never(self)
 
 
-def _extract_domain_cookies(cookie_jar, domain: str) -> dict[str, str]:
+def _extract_domain_cookies(
+    cookie_jar: CookieJar, domain: str
+) -> dict[str, str | None]:
     """Extract cookies for specific domain from cookie jar."""
 
-    def is_domain_match(cookie) -> bool:
+    def is_domain_match(cookie: Cookie) -> bool:
         return cookie.domain in {domain, f".{domain}"}
 
     return {
@@ -70,7 +72,7 @@ def _extract_domain_cookies(cookie_jar, domain: str) -> dict[str, str]:
 
 def extract_cookies_from_browser(
     browser: SupportedBrowser, domain: str
-) -> dict[str, str]:
+) -> dict[str, str | None]:
     """Extract cookies from browser for given domain."""
     try:
         jar = browser.get_cookie_jar(domain_name=domain)
@@ -78,7 +80,7 @@ def extract_cookies_from_browser(
         logger.info(
             "📊 Extracted %d total cookies from %s", len(cookies), browser.value.title()
         )
-    except Exception as e:
+    except (RuntimeError, ValueError) as e:
         logger.error(
             "❌ Failed to extract cookies from %s: %s", browser.value.title(), e
         )
@@ -98,19 +100,24 @@ def _is_auth_cookie_by_name(name: str) -> bool:
 
 def _is_auth_cookie_by_value(value: str) -> bool:
     """Check if cookie value looks like a session token."""
-    return len(value) > 32 and any(c.isalnum() for c in value)
+    min_key_length = 32
+    return len(value) > min_key_length and any(c.isalnum() for c in value)
 
 
-def filter_auth_cookies(cookies: dict[str, str]) -> dict[str, str]:
+def filter_auth_cookies(cookies: dict[str, str | None]) -> dict[str, str]:
     """Filter cookies to keep only authentication-related ones."""
     auth_cookies = {
         name: value
         for name, value in cookies.items()
-        if _is_auth_cookie_by_name(name) or _is_auth_cookie_by_value(value)
+        if value is not None
+        and (_is_auth_cookie_by_name(name) or _is_auth_cookie_by_value(value))
     }
 
     # If no specific auth cookies found, use all cookies (might be custom naming)
-    if not auth_cookies and len(cookies) <= 10:
-        auth_cookies = cookies
+    max_cookies = 10
+    if not auth_cookies and len(cookies) <= max_cookies:
+        auth_cookies = {
+            name: value for name, value in cookies.items() if value is not None
+        }
 
     return auth_cookies

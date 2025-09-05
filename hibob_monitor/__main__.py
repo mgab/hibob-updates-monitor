@@ -34,7 +34,7 @@ def setup_logging() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
 
 
-def run_hibob_monitor(
+def run_hibob_monitor(  # noqa: PLR0913
     domain: str,
     browser: SupportedBrowser,
     cache_file: Path,
@@ -50,13 +50,13 @@ def run_hibob_monitor(
     logger.info("🔍 HiBob Employee Monitor")
     logger.info("📍 Domain: %s", domain)
     logger.info("🌐 Browser: %s", browser.value.title())
-    if enable_change_tracking:
-        logger.info(
-            "📝 Change tracking: enabled (cache: %s, log: %s)", cache_file, log_file
-        )
-    else:
-        logger.info("📝 Change tracking: disabled")
-    logger.info("")
+
+    msg = (
+        f"enabled (cache: {cache_file}, log: {log_file})"
+        if enable_change_tracking
+        else "disabled"
+    )
+    logger.info("📝 Change tracking: %s", msg)
 
     employee_list = fetch_new_employee_list(domain, browser)
 
@@ -80,33 +80,7 @@ def run_hibob_monitor(
     # Handle change tracking
     change_report_text = None
     if enable_change_tracking:
-        logger.info("\n🔄 Checking for changes...")
-        change_report = get_changes_since_latest_cache(employee_list, cache_file)
-
-        if change_report is None:
-            logger.info("📥 First run - creating initial cache")
-        elif not change_report.has_changes:
-            logger.info("✅ No changes detected since last run")
-        else:
-            logger.info(
-                "📈 Changes detected: %s added, %s removed, %s modified",
-                len(change_report.added),
-                len(change_report.removed),
-                len(change_report.modified),
-            )
-            change_report_text = format_change_report_as_text(change_report)
-            # Append to the log file
-            success = append_to_file(change_report_text, log_file)
-
-            if success:
-                logger.info(
-                    "📝 %s changes logged to %s", change_report.total_changes, log_file
-                )
-            else:
-                logger.warning("⚠️  Warning: Could not write to log file %s", log_file)
-
-        # Save current data to cache
-        save_cache(employee_list, cache_file, DEFAULT_CACHE_CONFIG)
+        change_report_text = get_change_report(employee_list, cache_file, log_file)
 
     match output:
         case StdOutOutputInfo.CHANGES:
@@ -118,6 +92,39 @@ def run_hibob_monitor(
             pass
         case _:
             assert_never(output)
+
+
+def get_change_report(
+    employee_list: EmployeeList, cache_file: Path, log_file: Path
+) -> str | None:
+    change_report_text = None
+    logger.info("\n🔄 Checking for changes...")
+    change_report = get_changes_since_latest_cache(employee_list, cache_file)
+
+    if change_report is None:
+        logger.info("📥 First run - creating initial cache")
+    elif not change_report.has_changes:
+        logger.info("✅ No changes detected since last run")
+    else:
+        logger.info(
+            "📈 Changes detected: %s added, %s removed, %s modified",
+            len(change_report.added),
+            len(change_report.removed),
+            len(change_report.modified),
+        )
+        change_report_text = format_change_report_as_text(change_report)
+        # Append to the log file
+        success = append_to_file(change_report_text, log_file)
+
+        if success:
+            logger.info(
+                "📝 %s changes logged to %s", change_report.total_changes, log_file
+            )
+        else:
+            logger.warning("⚠️  Warning: Could not write to log file %s", log_file)
+        save_cache(employee_list, cache_file, DEFAULT_CACHE_CONFIG)
+
+    return change_report_text
 
 
 def fetch_new_employee_list(

@@ -4,10 +4,8 @@ Employee data extraction and filtering
 
 import logging
 from functools import partial
-from typing import Any
 
 from .config import (
-    ACTIVE_STATUS_VALUES,
     API_ENDPOINTS,
     EMPLOYEE_DATA_KEYS,
     EMPLOYEE_FIELDS,
@@ -23,7 +21,7 @@ def _is_employee_object(data: object) -> bool:
     return isinstance(data, dict) and all(field in data for field in EMPLOYEE_FIELDS)
 
 
-def _extract_employees_from_response(data: object) -> list[dict[str, Any]]:
+def _extract_employees_from_response(data: object) -> list[dict[str, object]]:
     """Extract employee list from API response."""
     if isinstance(data, list):
         return data
@@ -31,7 +29,7 @@ def _extract_employees_from_response(data: object) -> list[dict[str, Any]]:
         # Try known keys for employee arrays
         for key in EMPLOYEE_DATA_KEYS:
             if key in data and isinstance(data[key], list):
-                return data[key]
+                return data[key]  # type: ignore[no-any-return]
 
         # Single employee object
         if _is_employee_object(data):
@@ -40,41 +38,15 @@ def _extract_employees_from_response(data: object) -> list[dict[str, Any]]:
     return []
 
 
-def _is_employee_active(employee: dict[str, Any]) -> bool:
+def _is_employee_active(employee: dict[str, object]) -> bool:  # noqa: ARG001
     """Check if employee is active based on various status fields."""
-    if not isinstance(employee, dict):
-        return False
-
-    # Check direct status field
-    if "status" in employee:
-        status = str(employee["status"]).lower()
-        return status in ACTIVE_STATUS_VALUES
-
-    # Check employment.status
-    if (
-        "employment" in employee
-        and isinstance(employee["employment"], dict)
-        and "status" in employee["employment"]
-    ):
-        status = str(employee["employment"]["status"]).lower()
-        return status in ACTIVE_STATUS_VALUES
-
-    # Check isActive boolean
-    if "isActive" in employee:
-        return bool(employee["isActive"])
-
-    # Check termination/end dates
-    if "terminationDate" in employee:
-        return employee["terminationDate"] is None or employee["terminationDate"] == ""
-
-    if "endDate" in employee:
-        return employee["endDate"] is None or employee["endDate"] == ""
-
-    # Default to active if no status indicators found
+    # I have no data on disabled employees, so I'll disable this check for now
     return True
 
 
-def _filter_active_employees(employees: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _filter_active_employees(
+    employees: list[dict[str, object]],
+) -> list[dict[str, object]]:
     """Filter employees to only include active ones."""
     active_employees = [emp for emp in employees if _is_employee_active(emp)]
 

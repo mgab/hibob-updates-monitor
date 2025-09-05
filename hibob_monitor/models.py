@@ -3,7 +3,7 @@ Data models for HiBob employee monitoring
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Self
 
 
@@ -85,13 +85,21 @@ class EmployeeList:
     def from_raw_data(cls, employees_data: list[dict[str, Any]]) -> "EmployeeList":
         """Create EmployeeList from raw API response data."""
         employees = [Employee.from_raw_data(emp_data) for emp_data in employees_data]
-        return cls(timestamp=datetime.now(), count=len(employees), employees=employees)
+        return cls(
+            timestamp=datetime.now(tz=UTC),
+            count=len(employees),
+            employees=employees,
+        )
 
     def __eq__(self, other: object) -> bool:
         """Compare EmployeeLists based on employee data (ignoring timestamp)."""
         if not isinstance(other, EmployeeList):
             return False
         return self.employees == other.employees
+
+    def __hash__(self) -> int:
+        """Hash based on employees for set operations."""
+        return hash(tuple(self.employees))
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""

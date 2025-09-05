@@ -9,8 +9,8 @@ from pathlib import Path
 
 import hibob_monitor
 
-from .cookies import SupportedBrowser
-from .output import OutputFormat
+from .cookies import SupportedBrowser as SupportedBrowser
+from .output import OutputFormat as OutputFormat
 
 
 class StdOutOutputInfo(StrEnum):

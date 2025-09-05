@@ -48,3 +48,10 @@ ignore = [
     "S101",  # assert
     "T201",  # print
 ]
+
+[[tool.mypy.overrides]]
+module = [
+    'browser_cookie3',
+]
+# https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-library-stubs-or-py-typed-marker
+ignore_missing_imports = true

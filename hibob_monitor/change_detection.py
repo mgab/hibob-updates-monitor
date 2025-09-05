@@ -31,7 +31,7 @@ def _deep_diff(
         """Extend the current path with an additional segment."""
         return f"{path}.{extra}" if path else extra
 
-    changes = []
+    changes: list[FieldChange] = []
 
     if path in ignored_paths or old_obj == new_obj:
         return changes
@@ -83,9 +83,9 @@ def compare_employee_lists(
     current_keys = set(current_index.keys())
     previous_keys = set(previous_index.keys())
 
-    added_employees = []
-    removed_employees = []
-    modified_employees = []
+    added_employees: list[Employee] = []
+    removed_employees: list[Employee] = []
+    modified_employees: list[ModifiedEmployee] = []
 
     # Find added employees
     added_employees.extend(current_index[key] for key in current_keys - previous_keys)

@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from hibob_monitor.change_detection import compare_employee_lists
 from hibob_monitor.models import (
@@ -14,7 +15,7 @@ def make_employee(  # noqa: PLR0913
     status: str = "active",
     department: str = "",
     site: str = "",
-    extra: dict | None = None,
+    extra: dict[str, Any] | None = None,
 ) -> Employee:
     raw = {
         "id": id_,
