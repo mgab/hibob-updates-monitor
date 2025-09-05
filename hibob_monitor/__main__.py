@@ -122,8 +122,8 @@ def get_change_report(
             )
         else:
             logger.warning("⚠️  Warning: Could not write to log file %s", log_file)
-        save_cache(employee_list, cache_file, DEFAULT_CACHE_CONFIG)
 
+    save_cache(employee_list, cache_file, DEFAULT_CACHE_CONFIG)
     return change_report_text
 
 
