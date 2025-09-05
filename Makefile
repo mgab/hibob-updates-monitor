@@ -22,6 +22,10 @@ check-typing:
 check-tests:
 	uv run pytest -v tests/unit/
 
+.PHONY: check-it-tests
+check-it-tests:
+	uv run pytest -v tests/integration/
+
 .PHONY: checks
 checks: check-format check-typing check-tests check-it-tests
 
