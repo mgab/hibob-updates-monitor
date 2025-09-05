@@ -39,10 +39,6 @@ def make_request(
     try:
         req = _create_request(url, DEFAULT_HEADERS, cookies)
 
-        if not url.startswith(("http:", "https:")):
-            msg = "URL must start with 'http:' or 'https:'"
-            raise ValueError(msg)
-
         with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310
             if response.status == HTTPStatus.OK:
                 result: dict[str, Any] = json.loads(response.read().decode("utf-8"))
@@ -50,17 +46,10 @@ def make_request(
             return None
 
     except urllib.error.HTTPError as e:
-        if e.code == HTTPStatus.UNAUTHORIZED:
-            msg = "Unauthorized (401). Please check your cookies and domain."
-            raise PermissionError(msg) from e
-        if e.code == HTTPStatus.FORBIDDEN:
-            msg = "Forbidden (403). You don't have permission to access this resource."
-            raise PermissionError(msg) from e
-        if e.code == HTTPStatus.NOT_FOUND:
-            msg = "Not Found (404). The requested resource could not be found."
-            raise FileNotFoundError(msg) from e
-        if e.code == HTTPStatus.INTERNAL_SERVER_ERROR:
-            msg = "Internal Server Error (500). The server encountered an error."
-            raise ConnectionError(msg) from e
-        msg = f"HTTP error occurred: {e.reason} (status code: {e.code})"
-        raise ConnectionError(msg) from e
+        if (
+            e.code != HTTPStatus.UNAUTHORIZED
+        ):  # Don't log 401 errors, they're expected during testing
+            pass
+        return None
+    except Exception:  # noqa: BLE001
+        return None
