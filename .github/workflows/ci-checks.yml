@@ -43,7 +43,6 @@ jobs:
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
-          token: ${{ secrets.GHA_TRIGGER_TOKEN }}
 
       - name: Setup UV & python
         uses: astral-sh/setup-uv@v6
